@@ -1,18 +1,12 @@
 package com.application.reporteciudadano.controllers;
 
 import com.application.reporteciudadano.controllers.dto.EmployDTO;
-import com.application.reporteciudadano.controllers.dto.UserDTO;
 import com.application.reporteciudadano.entities.EmployEntity;
-import com.application.reporteciudadano.entities.UserEntity;
 import com.application.reporteciudadano.service.IEmployService;
-import com.application.reporteciudadano.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -53,6 +47,15 @@ public class EmployController {
                 .build());
 
         return ResponseEntity.created(new URI("/api/employee/save")).build();
+    }
+
+    @DeleteMapping("delete/{id}")
+    public ResponseEntity<?> deleteById(@PathVariable Long id){
+        if(id != null){
+            employService.deleteById(id);
+            return ResponseEntity.ok("Se ah eliminado el empleado con id: " +id+ " con exito");
+        }
+        return ResponseEntity.notFound().build();
     }
 
 }
