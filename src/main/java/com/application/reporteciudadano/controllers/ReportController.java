@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
+@CrossOrigin("*")
 @RequestMapping("/api/report")
 public class ReportController {
 
@@ -47,6 +48,26 @@ public class ReportController {
         return ResponseEntity.ok(reportDTOList);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> findById(@PathVariable Long id) {
+        Optional<ReportEntity> reportEntityOptional = reportService.findById(id);
+        if (reportEntityOptional.isPresent()) {
+            ReportEntity report = reportEntityOptional.get();
+            ReportDTO reportDTO = ReportDTO.builder()
+                    .id(report.getId())
+                    .tiposIncidencia(String.valueOf(report.getTipos_incidencia()))
+                    .description(report.getDescription())
+                    .address(report.getAddress())
+                    .comments(report.getComments())
+                    .status(String.valueOf(report.getStatus()))
+                    .createdAt(report.getCreate_at())
+                    .user(report.getUser())
+                    .build();
+            return ResponseEntity.ok(reportDTO);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
     @PostMapping("/save")
     public ResponseEntity<?> save(@RequestBody ReportDTO reportDTO) throws URISyntaxException {
         Optional<UserEntity> userOptional = userService.findById(reportDTO.getUser().getId());

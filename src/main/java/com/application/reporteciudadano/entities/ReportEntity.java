@@ -42,9 +42,9 @@ public class ReportEntity {
     private UserEntity user;
 
     public enum TIPOS_INCIDENCIA {
-        Bache,
-        Problema_de_alumbrado,
-        Reporte_de_basura
+        BACHE,
+        PROBLEMA_ALUMBRADO,
+        REPORTE_BASURA
     }
 
     public enum STATUS {
