@@ -8,10 +8,7 @@ import com.application.reporteciudadano.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,7 +20,7 @@ import java.util.Optional;
 public class ReportController {
 
     private final IReportService reportService;
-    private final IUserService userService; // Aquí se inyecta el servicio UserService
+    private final IUserService userService;
 
     @Autowired
     public ReportController(IReportService reportService, IUserService userService) {
@@ -71,5 +68,19 @@ public class ReportController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateReport(@PathVariable Long id, @RequestBody ReportDTO reportDTO){
+        Optional<ReportEntity> reportEntityOptional = reportService.findById(id);
+
+        if(reportEntityOptional.isPresent()){
+            ReportEntity report = reportEntityOptional.get();
+            report.setStatus(ReportEntity.STATUS.valueOf(reportDTO.getStatus()));
+            reportService.save(report);
+            return ResponseEntity.ok("Reporte Actualizado");
+        }
+        return ResponseEntity.notFound().build();
+    }
+
 
 }
