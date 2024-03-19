@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 @Controller
+@CrossOrigin("*")
 @RequestMapping("/api/employee")
 public class EmployController {
 
