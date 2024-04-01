@@ -5,8 +5,12 @@ import com.application.reporteciudadano.entities.ReportEntity;
 import com.application.reporteciudadano.entities.UserEntity;
 import com.application.reporteciudadano.service.IReportService;
 import com.application.reporteciudadano.service.IUserService;
+import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Controller
-@CrossOrigin("*")
+@CrossOrigin("http://localhost:9090")
 @RequestMapping("/api/report")
 public class ReportController {
 
@@ -31,7 +35,14 @@ public class ReportController {
 
 
     @GetMapping
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<?> findAll(){
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         List<ReportDTO> reportDTOList = reportService.findAll()
                 .stream()
                 .map(report -> ReportDTO.builder()
