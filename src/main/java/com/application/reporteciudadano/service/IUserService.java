@@ -14,4 +14,6 @@ public interface IUserService {
     void save(UserEntity user);
 
     void deleteById(Long id);
+
+    Optional<UserEntity> findByUsername(String username);
 }
