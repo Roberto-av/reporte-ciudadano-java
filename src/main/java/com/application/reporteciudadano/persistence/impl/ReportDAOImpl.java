@@ -1,5 +1,6 @@
 package com.application.reporteciudadano.persistence.impl;
 
+import com.application.reporteciudadano.controllers.dto.response.ReportResponseDTO;
 import com.application.reporteciudadano.entities.ReportEntity;
 import com.application.reporteciudadano.persistence.IReportDAO;
 import com.application.reporteciudadano.repositories.ReportRepository;
@@ -34,5 +35,10 @@ public class ReportDAOImpl implements IReportDAO {
     @Override
     public void deleteById(Long id) {
         reportRepository.deleteById(id);
+    }
+
+    @Override
+    public List<ReportResponseDTO> findAllByUsername(String username) {
+        return reportRepository.findAllByUsername(username);
     }
 }

@@ -1,5 +1,6 @@
 package com.application.reporteciudadano.service.impl;
 
+import com.application.reporteciudadano.controllers.dto.response.ReportResponseDTO;
 import com.application.reporteciudadano.entities.ReportEntity;
 import com.application.reporteciudadano.persistence.IReportDAO;
 import com.application.reporteciudadano.service.IReportService;
@@ -33,5 +34,10 @@ public class ReportServiceImpl implements IReportService {
     @Override
     public void deleteById(Long id) {
         reportDAO.deleteById(id);
+    }
+
+    @Override
+    public List<ReportResponseDTO> findAllByUsername(String username) {
+        return reportDAO.findAllByUsername(username);
     }
 }
