@@ -34,4 +34,11 @@ public class UserServiceImpl implements IUserService {
     public void deleteById(Long id) {
         userDAO.deleteById(id);
     }
+
+    @Override
+    public Optional<UserEntity> findByUsername(String username) {
+        return userDAO.findByUsername(username);
+    }
+
+
 }
