@@ -1,4 +1,4 @@
-package com.application.reporteciudadano.controllers.dto;
+package com.application.reporteciudadano.controllers.dto.response;
 
 import com.application.reporteciudadano.entities.UserEntity;
 import lombok.AllArgsConstructor;
@@ -12,8 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ReportDTO {
-
+public class ReportResponseDTO {
     private Long id;
     private String tiposIncidencia;
     private String description;
