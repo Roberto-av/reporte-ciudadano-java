@@ -1,5 +1,6 @@
 package com.application.reporteciudadano.persistence;
 
+import com.application.reporteciudadano.controllers.dto.response.ReportResponseDTO;
 import com.application.reporteciudadano.entities.ReportEntity;
 
 import java.util.List;
@@ -14,4 +15,6 @@ public interface IReportDAO {
     void save(ReportEntity report);
 
     void deleteById(Long id);
+
+    Optional<List<ReportEntity>> findAllByUsername(String username);
 }

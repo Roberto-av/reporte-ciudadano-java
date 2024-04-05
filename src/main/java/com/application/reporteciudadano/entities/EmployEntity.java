@@ -24,13 +24,23 @@ public class EmployEntity {
     @Column(name = "apellidos")
     private String lastName;
 
+    @Column(name = "numero_celular")
+    private String phoneNumber;
+
     @Column(name = "email", unique = true)
     @Size(max = 100)
     @Email
     private String email;
 
-    @Column(name = "contraseña")
-    @Size(min = 8, max = 20, message = "La contraseña debe tener entre 8 y 20 caracteres")
+    @Column(name = "username")
+    private String username;
+
+    @Column(name = "password")
+    @Size(min = 8, max = 60, message = "La contraseña debe tener entre 8 y 20 caracteres")
     private String password;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private UserEntity user;
 
 }
