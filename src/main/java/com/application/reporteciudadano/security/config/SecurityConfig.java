@@ -38,9 +38,11 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests->{
+                    requests.requestMatchers("/auth/register_employee").hasAuthority(Role.ROLE_ADMIN.toString());
                     requests.requestMatchers("/auth/**").permitAll();
                     requests.requestMatchers("/api/report/save").hasAuthority(Role.ROLE_USER.toString());
-                    requests.requestMatchers("/api/report/", "/api/report/update/{id}", "/api/report/{id}").hasAuthority(Role.ROLE_ADMIN.toString());
+                    requests.requestMatchers("/api/report/", "/api/report/update/{id}").hasAuthority(Role.ROLE_ADMIN.toString());
+                    requests.requestMatchers("/api/report/", "/api/report/update/{id}").hasAuthority(Role.ROLE_EMPLOYEE.toString());
                     requests.anyRequest().authenticated();
                 })
                 .sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
