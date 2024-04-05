@@ -8,6 +8,7 @@ import com.application.reporteciudadano.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +39,9 @@ public class ReportDAOImpl implements IReportDAO {
     }
 
     @Override
-    public List<ReportResponseDTO> findAllByUsername(String username) {
-        return reportRepository.findAllByUsername(username);
+    public Optional<List<ReportEntity>> findAllByUsername(String username) {
+        return reportRepository.findAllByUserUsername(username);
     }
+
+
 }

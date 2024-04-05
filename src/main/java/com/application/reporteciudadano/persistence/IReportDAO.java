@@ -16,5 +16,5 @@ public interface IReportDAO {
 
     void deleteById(Long id);
 
-    List<ReportResponseDTO> findAllByUsername(String username);
+    Optional<List<ReportEntity>> findAllByUsername(String username);
 }
