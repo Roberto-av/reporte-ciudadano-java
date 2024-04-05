@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.springframework.security.core.GrantedAuthority;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +41,7 @@ public class UserEntity {
     private String username;
 
     @Column(name = "contraseña")
-    //@Size(min = 8, max = 20, message = "La contraseña debe tener entre 8 y 20 caracteres")
+    @Size(min = 8, max = 60, message = "La contraseña debe tener entre 8 y 20 caracteres")
     private String password;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
@@ -56,6 +54,9 @@ public class UserEntity {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<RoleEntity> roles = new HashSet<>();
+
+    @OneToOne(mappedBy = "user")
+    private EmployEntity employee;
 
 
 }
