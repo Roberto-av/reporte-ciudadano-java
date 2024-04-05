@@ -20,4 +20,11 @@ public class RegisterResponse {
 
     public RegisterResponse(Long id, String userCreated) {
     }
+
+    public RegisterResponse(String message) {
+        this.userEntity = null;
+        this.message = message;
+    }
+
+
 }
