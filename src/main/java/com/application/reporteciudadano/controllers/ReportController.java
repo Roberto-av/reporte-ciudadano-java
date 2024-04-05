@@ -4,6 +4,7 @@ import com.application.reporteciudadano.controllers.dto.request.ReportRequestDTO
 import com.application.reporteciudadano.controllers.dto.response.ReportResponseDTO;
 import com.application.reporteciudadano.entities.ReportEntity;
 import com.application.reporteciudadano.entities.UserEntity;
+import com.application.reporteciudadano.security.exceptions.UserNotFoundException;
 import com.application.reporteciudadano.service.IReportService;
 import com.application.reporteciudadano.service.IUserService;
 import org.springframework.security.core.Authentication;
@@ -37,83 +38,57 @@ public class ReportController {
 
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE')")
     public ResponseEntity<List<ReportResponseDTO>> findAll() {
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+        if (!authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_EMPLOYEE"))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         List<ReportEntity> reports = reportService.findAll();
         List<ReportResponseDTO> reportResponseDTOList = reports.stream()
-                .map(report -> ReportResponseDTO.builder()
-                        .id(report.getId())
-                        .tiposIncidencia(String.valueOf(report.getTipos_incidencia()))
-                        .description(report.getDescription())
-                        .address(report.getAddress())
-                        .comments(report.getComments())
-                        .status(String.valueOf(report.getStatus()))
-                        .createdAt(report.getCreate_at())
-                        .user(report.getUser())
-                        .build())
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(reportResponseDTOList);
     }
+
 
 
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         Optional<ReportEntity> reportEntityOptional = reportService.findById(id);
-        if (reportEntityOptional.isPresent()) {
-            ReportEntity report = reportEntityOptional.get();
-            ReportResponseDTO reportResponseDTO = ReportResponseDTO.builder()
-                    .id(report.getId())
-                    .tiposIncidencia(String.valueOf(report.getTipos_incidencia()))
-                    .description(report.getDescription())
-                    .address(report.getAddress())
-                    .comments(report.getComments())
-                    .status(String.valueOf(report.getStatus()))
-                    .createdAt(report.getCreate_at())
-                    .user(report.getUser())
-                    .build();
+        return reportEntityOptional.map(report -> {
+            ReportResponseDTO reportResponseDTO = convertToDto(report);
             return ResponseEntity.ok(reportResponseDTO);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        }).orElse(ResponseEntity.notFound().build());
     }
+
 
     @PostMapping("/save")
     public ResponseEntity<?> save(@RequestBody ReportRequestDTO reportRequestDTO) throws URISyntaxException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName(); // Obtiene el nombre de usuario
+        String username = authentication.getName();
 
-        // Aquí asumo que tienes un método en el servicio de usuario para buscar por nombre de usuario
-        Optional<UserEntity> userOptional = userService.findByUsername(username);
-        if (userOptional.isPresent()) {
-            UserEntity user = userOptional.get();
+        UserEntity user = getUserByUsername(username);
 
-            // Crear y guardar el reporte asociado al usuario
-            reportService.save(ReportEntity.builder()
-                    .tipos_incidencia(ReportEntity.TIPOS_INCIDENCIA.valueOf(reportRequestDTO.getTiposIncidencia()))
-                    .description(reportRequestDTO.getDescription())
-                    .address(reportRequestDTO.getAddress())
-                    .comments(reportRequestDTO.getComments())
-                    .user(user)
-                    .build());
+        // Crear y guardar el reporte asociado al usuario
+        ReportEntity report = ReportEntity.builder()
+                .tipos_incidencia(ReportEntity.TIPOS_INCIDENCIA.valueOf(reportRequestDTO.getTiposIncidencia()))
+                .description(reportRequestDTO.getDescription())
+                .address(reportRequestDTO.getAddress())
+                .comments(reportRequestDTO.getComments())
+                .user(user)
+                .build();
 
-            return ResponseEntity.created(new URI("/api/report/save")).build();
-        } else {
-            // Manejar el caso en que el usuario no se encuentre en el repositorio
-            return ResponseEntity.notFound().build();
-        }
+        reportService.save(report);
+
+        return ResponseEntity.created(new URI("/api/report/save")).build();
     }
 
 
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE')")
     public ResponseEntity<?> updateReport(@PathVariable Long id, @RequestBody ReportRequestDTO reportRequestDTO){
         Optional<ReportEntity> reportEntityOptional = reportService.findById(id);
 
@@ -121,7 +96,7 @@ public class ReportController {
             ReportEntity report = reportEntityOptional.get();
             report.setStatus(ReportEntity.STATUS.valueOf(reportRequestDTO.getStatus()));
             reportService.save(report);
-            return ResponseEntity.ok("Reporte Actualizado");
+            return ResponseEntity.ok("Update report");
         }
         return ResponseEntity.notFound().build();
     }
@@ -132,11 +107,37 @@ public class ReportController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        List<ReportResponseDTO> userReports = reportService.findAllByUsername(username);
+        Optional<List<ReportEntity>> optionalReports = reportService.findAllByUsername(username);
 
-        return ResponseEntity.ok(userReports);
+        if (optionalReports.isPresent()) {
+            List<ReportEntity> reports = optionalReports.get();
+            List<ReportResponseDTO> userReports = reports.stream()
+                    .map(this::convertToDto)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(userReports);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 
+
+    private ReportResponseDTO convertToDto(ReportEntity report) {
+        return ReportResponseDTO.builder()
+                .id(report.getId())
+                .tiposIncidencia(String.valueOf(report.getTipos_incidencia()))
+                .description(report.getDescription())
+                .address(report.getAddress())
+                .comments(report.getComments())
+                .status(String.valueOf(report.getStatus()))
+                .createdAt(report.getCreate_at())
+                .user(report.getUser())
+                .build();
+    }
+
+    private UserEntity getUserByUsername(String username) {
+        Optional<UserEntity> userOptional = userService.findByUsername(username);
+        return userOptional.orElseThrow(() -> new UserNotFoundException("User not fund: " + username));
+    }
 
 
 }
