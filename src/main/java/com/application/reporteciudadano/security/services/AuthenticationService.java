@@ -1,9 +1,11 @@
 package com.application.reporteciudadano.security.services;
 
-import com.application.reporteciudadano.controllers.dto.UserDTO;
+import com.application.reporteciudadano.controllers.dto.request.EmployeeRequestDTO;
+import com.application.reporteciudadano.entities.EmployEntity;
 import com.application.reporteciudadano.entities.Role;
 import com.application.reporteciudadano.entities.RoleEntity;
 import com.application.reporteciudadano.entities.UserEntity;
+import com.application.reporteciudadano.repositories.EmployRepository;
 import com.application.reporteciudadano.repositories.RoleRepository;
 import com.application.reporteciudadano.repositories.UserRepository;
 import com.application.reporteciudadano.security.authResponse.LoginRequest;
@@ -12,10 +14,6 @@ import com.application.reporteciudadano.security.authResponse.RegisterResponse;
 import com.application.reporteciudadano.security.exceptions.UserRegistrationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -24,31 +22,32 @@ import java.util.*;
 @Service
 public class AuthenticationService {
 
-    @Autowired
-    UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final EmployRepository employRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
+    private final RoleRepository roleRepository;
 
     @Autowired
-    PasswordEncoder passwordEncoder;
-
-    @Autowired
-    JwtService jwtService;
-
-    @Autowired
-    AuthenticationManager authenticationManager;
-
-    @Autowired
-    RoleRepository roleRepository;
+    public AuthenticationService(UserRepository userRepository, EmployRepository employRepository,
+                       PasswordEncoder passwordEncoder, JwtService jwtService,
+                       AuthenticationManager authenticationManager, RoleRepository roleRepository) {
+        this.userRepository = userRepository;
+        this.employRepository = employRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.authenticationManager = authenticationManager;
+        this.roleRepository = roleRepository;
+    }
 
     public RegisterResponse register(UserEntity userEntity) {
-        // Verificar si el usuario ya existe
         if (userRepository.findByUsername(userEntity.getUsername()).isPresent()) {
             throw new UserRegistrationException("User already exists");
         }
 
-        // Codificar la contraseña
         userEntity.setPassword(passwordEncoder.encode(userEntity.getPassword()));
 
-        // Obtener o crear el rol de usuario si no existe
         RoleEntity userRole = roleRepository.findByName(Role.ROLE_USER)
                 .orElseGet(() -> {
                     RoleEntity newRole = new RoleEntity(Role.ROLE_USER);
@@ -56,27 +55,21 @@ public class AuthenticationService {
                     return roleRepository.save(newRole);
                 });
 
-        // Asignar el rol de usuario al usuario
         Set<RoleEntity> roles = new HashSet<>();
         roles.add(userRole);
         userEntity.setRoles(roles);
 
-        // Guardar el usuario en la base de datos
         UserEntity savedUser = userRepository.save(userEntity);
 
-        // Devolver respuesta de registro exitoso
         return new RegisterResponse(savedUser.getId(), "User created");
     }
     public RegisterResponse registerAdmin(UserEntity user) {
-        // Verificar si el usuario ya existe
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            return new RegisterResponse((Long) null, "User already exists");
+            return new RegisterResponse("User already exists");
         }
 
-        // Codificar la contraseña
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Obtener el rol ADMIN de la base de datos
         RoleEntity adminRole = roleRepository.findByName(Role.ROLE_ADMIN)
                 .orElseGet(() -> {
                     RoleEntity newRole = new RoleEntity(Role.ROLE_ADMIN);
@@ -84,31 +77,24 @@ public class AuthenticationService {
                     return roleRepository.save(newRole);
                 });
 
-        // Asignar el rol de administrador al usuario
         Set<RoleEntity> roles = new HashSet<>();
         roles.add(adminRole);
         user.setRoles(roles);
 
-        // Guardar el usuario en la base de datos
         UserEntity savedUser = userRepository.save(user);
 
-        // Devolver respuesta de registro exitoso
         return new RegisterResponse(savedUser.getId(), "User created");
     }
 
     public LoginResponse login(LoginRequest loginRequest) {
-        // Buscar al usuario en la base de datos por nombre de usuario
         Optional<UserEntity> userOptional = userRepository.findByUsername(loginRequest.getUsername());
 
-        // Verificar si el usuario existe
-        if (!userOptional.isPresent()) {
+        if (userOptional.isEmpty()) {
             return new LoginResponse(null, null, "Username not found");
         }
 
-        // Obtener el usuario de la opción opcional
         UserEntity user = userOptional.get();
 
-        // Verificar si la contraseña proporcionada coincide con la contraseña encriptada almacenada en la base de datos
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             return new LoginResponse(null, null, "Invalid username or password");
         }
@@ -116,18 +102,57 @@ public class AuthenticationService {
         // Generar token JWT si la autenticación es exitosa
         String token = jwtService.generateToken(user);
 
-        // Devolver respuesta de inicio de sesión exitoso
         return new LoginResponse(token, "Login successful", String.valueOf(user.getId()));
     }
 
-    private UserEntity convertToEntity(UserDTO userDTO) {
-        return UserEntity.builder()
-                .firstName(userDTO.getFirstName())
-                .lastName(userDTO.getLastName())
-                .email(userDTO.getEmail())
-                .phoneNumber(userDTO.getPhoneNumber())
-                .username(userDTO.getUsername())
-                .password(userDTO.getPassword())
+    public RegisterResponse registerEmployee(EmployeeRequestDTO employeeDTO, String username, String password) {
+        Optional<EmployEntity> existingEmployeeByEmail = employRepository.findByEmail(employeeDTO.getEmail());
+        Optional<EmployEntity> existingEmployeeByUsername = employRepository.findByUsername(employeeDTO.getUsername());
+
+        if (existingEmployeeByEmail.isPresent() || existingEmployeeByUsername.isPresent()) {
+            return new RegisterResponse("Employee with the same email or username already exists");
+        }
+
+        EmployEntity employeeEntity = convertToEntity(employeeDTO);
+
+        String encryptedPassword = passwordEncoder.encode(password);
+        employeeEntity.setPassword(encryptedPassword);
+
+        EmployEntity savedEmployee = employRepository.save(employeeEntity);
+
+        // Crear un nuevo objeto UserEntity
+        UserEntity userEntity = new UserEntity();
+        userEntity.setUsername(username);
+        userEntity.setPassword(encryptedPassword);
+
+        RoleEntity employeeRole = roleRepository.findByName(Role.ROLE_EMPLOYEE)
+                .orElseGet(() -> {
+                    RoleEntity newRole = new RoleEntity(Role.ROLE_EMPLOYEE);
+                    newRole.setName(Role.ROLE_EMPLOYEE); // Asignar el nombre del rol
+                    return roleRepository.save(newRole);
+                });
+
+        Set<RoleEntity> roles = new HashSet<>();
+        roles.add(employeeRole);
+        userEntity.setRoles(roles);
+
+        userRepository.save(userEntity);
+
+        // Asociar el usuario con el empleado
+        employeeEntity.setUser(userEntity);
+        employRepository.save(employeeEntity);
+
+        return new RegisterResponse(savedEmployee.getId(), "Employee registered successfully");
+    }
+
+    private EmployEntity convertToEntity(EmployeeRequestDTO employeeDTO) {
+        return EmployEntity.builder()
+                .firstName(employeeDTO.getFirstName())
+                .lastName(employeeDTO.getLastName())
+                .email(employeeDTO.getEmail())
+                .username(employeeDTO.getUsername())
+                .password(employeeDTO.getPassword())
+                .phoneNumber(employeeDTO.getPhoneNumber())
                 .build();
     }
 
