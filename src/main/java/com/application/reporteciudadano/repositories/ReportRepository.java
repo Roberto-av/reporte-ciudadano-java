@@ -11,5 +11,5 @@ import java.util.Optional;
 @Repository
 public interface ReportRepository extends CrudRepository<ReportEntity, Long> {
 
-    Optional<List<ReportEntity>> findAllByUserUsername(String username);
+    Optional<List<ReportEntity>> findAllByUserId(Long id);
 }

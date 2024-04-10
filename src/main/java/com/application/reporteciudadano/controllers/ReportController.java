@@ -37,7 +37,7 @@ public class ReportController {
     }
 
 
-    @GetMapping
+    @GetMapping("/all")
     @PreAuthorize("hasAuthority('ROLE_ADMIN', 'ROLE_EMPLOYEE')")
     public ResponseEntity<List<ReportResponseDTO>> findAll() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -102,12 +102,9 @@ public class ReportController {
     }
 
 
-    @GetMapping("/findAll/user")
-    public ResponseEntity<List<ReportResponseDTO>> getMyReports() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        Optional<List<ReportEntity>> optionalReports = reportService.findAllByUsername(username);
+    @GetMapping("/findAll/user/{id}")
+    public ResponseEntity<List<ReportResponseDTO>> getMyReports(@PathVariable Long id) {
+        Optional<List<ReportEntity>> optionalReports = reportService.findAllByUserId(id);
 
         if (optionalReports.isPresent()) {
             List<ReportEntity> reports = optionalReports.get();
@@ -119,7 +116,6 @@ public class ReportController {
             return ResponseEntity.notFound().build();
         }
     }
-
 
     private ReportResponseDTO convertToDto(ReportEntity report) {
         return ReportResponseDTO.builder()

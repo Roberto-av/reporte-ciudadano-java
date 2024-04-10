@@ -39,8 +39,8 @@ public class ReportDAOImpl implements IReportDAO {
     }
 
     @Override
-    public Optional<List<ReportEntity>> findAllByUsername(String username) {
-        return reportRepository.findAllByUserUsername(username);
+    public Optional<List<ReportEntity>> findAllByUserId(Long id) {
+        return reportRepository.findAllByUserId(id);
     }
 
 

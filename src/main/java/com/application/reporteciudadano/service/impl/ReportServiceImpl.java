@@ -37,8 +37,8 @@ public class ReportServiceImpl implements IReportService {
     }
 
     @Override
-    public Optional<List<ReportEntity>> findAllByUsername(String username) {
-        return reportDAO.findAllByUsername(username);
+    public Optional<List<ReportEntity>> findAllByUserId(Long id) {
+        return reportDAO.findAllByUserId(id);
     }
 
 }

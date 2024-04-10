@@ -89,20 +89,18 @@ public class AuthenticationService {
     public LoginResponse login(LoginRequest loginRequest) {
         Optional<UserEntity> userOptional = userRepository.findByUsername(loginRequest.getUsername());
 
-        if (userOptional.isEmpty()) {
-            return new LoginResponse(null, null, "Username not found");
+        if (userOptional.isPresent()) {
+            UserEntity user = userOptional.get();
+
+            if (passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
+                // Generar token JWT si la autenticación es exitosa
+                String token = jwtService.generateToken(user);
+                return new LoginResponse(token, "Login successful", String.valueOf(user.getId()));
+            }
         }
 
-        UserEntity user = userOptional.get();
-
-        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            return new LoginResponse(null, null, "Invalid username or password");
-        }
-
-        // Generar token JWT si la autenticación es exitosa
-        String token = jwtService.generateToken(user);
-
-        return new LoginResponse(token, "Login successful", String.valueOf(user.getId()));
+        // Si no se encontró el usuario o las credenciales son incorrectas, devuelve un mensaje de error
+        return new LoginResponse(null, "Invalid username or password", null);
     }
 
     public RegisterResponse registerEmployee(EmployeeRequestDTO employeeDTO, String username, String password) {
@@ -143,6 +141,21 @@ public class AuthenticationService {
         employRepository.save(employeeEntity);
 
         return new RegisterResponse(savedEmployee.getId(), "Employee registered successfully");
+    }
+
+    public Set<RoleEntity> getUserRoles(Long userId) {
+        // Busca el usuario por su ID en la base de datos
+        Optional<UserEntity> optionalUser = userRepository.findById(userId);
+
+        if (optionalUser.isPresent()) {
+            // Obtiene el usuario de la base de datos
+            UserEntity user = optionalUser.get();
+            // Devuelve los roles asociados al usuario
+            return user.getRoles();
+        } else {
+            // Si no se encuentra el usuario, lanza una excepción
+            throw new RuntimeException("User not found");
+        }
     }
 
     private EmployEntity convertToEntity(EmployeeRequestDTO employeeDTO) {
