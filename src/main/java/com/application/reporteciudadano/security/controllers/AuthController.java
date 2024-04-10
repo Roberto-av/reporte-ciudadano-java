@@ -4,6 +4,7 @@ package com.application.reporteciudadano.security.controllers;
 import com.application.reporteciudadano.controllers.dto.UserDTO;
 import com.application.reporteciudadano.controllers.dto.request.EmployeeRequestDTO;
 import com.application.reporteciudadano.entities.Role;
+import com.application.reporteciudadano.entities.RoleEntity;
 import com.application.reporteciudadano.entities.UserEntity;
 import com.application.reporteciudadano.security.authResponse.LoginRequest;
 import com.application.reporteciudadano.security.authResponse.LoginResponse;
@@ -18,6 +19,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
@@ -102,6 +107,22 @@ public class AuthController {
             return new ResponseEntity<>(customResponse, status);
         } else {
             return new ResponseEntity<>(new RegisterResponse("Only admin can register employees"), HttpStatus.FORBIDDEN);
+        }
+    }
+
+    @GetMapping("/userRoles/{userId}")
+    public ResponseEntity<?> getUserRoles(@PathVariable Long userId){
+        try {
+            // Llama al método del servicio de autenticación para obtener los roles del usuario
+            Set<RoleEntity> roles = authenticationService.getUserRoles(userId);
+
+            // Convierte los roles a una lista de nombres de roles para devolver en la respuesta
+            List<String> roleNames = roles.stream().map(RoleEntity::getName).collect(Collectors.toList());
+
+            // Devuelve los nombres de roles en la respuesta
+            return new ResponseEntity<List<String>>(roleNames, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<String>(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
 
