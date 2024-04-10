@@ -36,7 +36,7 @@ public class EmployEntity {
     private String username;
 
     @Column(name = "password")
-    @Size(min = 8, max = 60, message = "La contraseña debe tener entre 8 y 20 caracteres")
+    @Size(min = 8, max = 100, message = "La contraseña debe tener un minimo de 8 caracteres")
     private String password;
 
     @OneToOne
