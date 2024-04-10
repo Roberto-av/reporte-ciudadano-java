@@ -11,6 +11,7 @@ import com.application.reporteciudadano.repositories.UserRepository;
 import com.application.reporteciudadano.security.authResponse.LoginRequest;
 import com.application.reporteciudadano.security.authResponse.LoginResponse;
 import com.application.reporteciudadano.security.authResponse.RegisterResponse;
+import com.application.reporteciudadano.security.exceptions.UserNotFoundException;
 import com.application.reporteciudadano.security.exceptions.UserRegistrationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -144,17 +145,13 @@ public class AuthenticationService {
     }
 
     public Set<RoleEntity> getUserRoles(Long userId) {
-        // Busca el usuario por su ID en la base de datos
         Optional<UserEntity> optionalUser = userRepository.findById(userId);
 
         if (optionalUser.isPresent()) {
-            // Obtiene el usuario de la base de datos
             UserEntity user = optionalUser.get();
-            // Devuelve los roles asociados al usuario
             return user.getRoles();
         } else {
-            // Si no se encuentra el usuario, lanza una excepción
-            throw new RuntimeException("User not found");
+            throw new UserNotFoundException("User not fund with id: " + userId);
         }
     }
 
