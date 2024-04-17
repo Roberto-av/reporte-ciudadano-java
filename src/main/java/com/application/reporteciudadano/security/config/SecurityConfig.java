@@ -43,6 +43,8 @@ public class SecurityConfig {
                     requests.requestMatchers("/api/report/save").hasAuthority(Role.ROLE_USER.toString());
                     requests.requestMatchers("/api/report/", "/api/report/update/{id}").hasAuthority(Role.ROLE_ADMIN.toString());
                     requests.requestMatchers("/api/report/", "/api/report/update/{id}").hasAuthority(Role.ROLE_EMPLOYEE.toString());
+                    requests.requestMatchers("/api/users/**").hasAuthority(Role.ROLE_ADMIN.toString());
+                    requests.requestMatchers("/api/employee/**").hasAuthority(Role.ROLE_ADMIN.toString());
                     requests.anyRequest().authenticated();
                 })
                 .sessionManagement(session-> session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
