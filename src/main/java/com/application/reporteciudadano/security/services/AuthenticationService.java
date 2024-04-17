@@ -1,6 +1,7 @@
 package com.application.reporteciudadano.security.services;
 
 import com.application.reporteciudadano.controllers.dto.request.EmployeeRequestDTO;
+import com.application.reporteciudadano.controllers.sockets.WebSocketController;
 import com.application.reporteciudadano.entities.EmployEntity;
 import com.application.reporteciudadano.entities.Role;
 import com.application.reporteciudadano.entities.RoleEntity;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -29,18 +31,25 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final RoleRepository roleRepository;
 
+    private final WebSocketController webSocketController;
+
     @Autowired
     public AuthenticationService(UserRepository userRepository, EmployRepository employRepository,
                        PasswordEncoder passwordEncoder, JwtService jwtService,
-                       AuthenticationManager authenticationManager, RoleRepository roleRepository) {
+                       AuthenticationManager authenticationManager, RoleRepository roleRepository,
+                                 WebSocketController webSocketController) {
+
         this.userRepository = userRepository;
         this.employRepository = employRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.roleRepository = roleRepository;
+        this.webSocketController = webSocketController;
     }
 
+
+    @Transactional
     public RegisterResponse register(UserEntity userEntity) {
         if (userRepository.findByUsername(userEntity.getUsername()).isPresent()) {
             throw new UserRegistrationException("User already exists");
@@ -61,8 +70,11 @@ public class AuthenticationService {
 
         UserEntity savedUser = userRepository.save(userEntity);
 
+        webSocketController.updateUsers();
+
         return new RegisterResponse(savedUser.getId(), "User created");
     }
+
     public RegisterResponse registerAdmin(UserEntity user) {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             return new RegisterResponse("User already exists");
