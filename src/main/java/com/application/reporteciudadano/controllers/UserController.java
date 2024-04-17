@@ -80,6 +80,7 @@ public class UserController {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .phoneNumber(user.getPhoneNumber())
+                .created_at(user.getCreatedAt())
                 .build();
     }
 
